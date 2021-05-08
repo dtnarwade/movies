@@ -1,6 +1,6 @@
 package com.example.movies.model
 
-class Movies (
+data class Movies (
     var adult : Boolean,
     var backdrop_path: String?,
     var id: Int,

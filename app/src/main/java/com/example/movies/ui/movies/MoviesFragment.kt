@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.movies.data.ConfigurationPreferences
 import com.example.movies.databinding.MoviesFragmentBinding
+import com.example.movies.ui.adapters.MoviesAdapter
 import com.example.wetherforecast.network.Resource
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -36,8 +37,6 @@ class MoviesFragment : Fragment() {
         viewModel = ViewModelProvider(this).get(MoviesViewModel::class.java)
         configPref = ConfigurationPreferences(requireContext())
 
-        viewModel.getPopularMovies()
-
         configPref.imageConfig.asLiveData().observe(viewLifecycleOwner, Observer {
             if (it == null) {
                 viewModel.getImageConfig()
@@ -59,16 +58,8 @@ class MoviesFragment : Fragment() {
             }
         })
 
-        viewModel.moviesResponse.observe(viewLifecycleOwner, Observer {
-            when (it) {
-                is Resource.Success -> {
-                    moviesAdapter.setPopularMovies(it.rspononse.results)
-                }
-                is Resource.failure -> {
-                    Toast.makeText(requireContext(), "failure in popular movies", Toast.LENGTH_LONG)
-                        .show()
-                }
-            }
+        viewModel.getPosts().observe(viewLifecycleOwner, Observer {
+            moviesAdapter.submitList(it)
         })
         viewModel.configResponse.observe(viewLifecycleOwner, Observer {
             when (it) {
@@ -101,7 +92,7 @@ class MoviesFragment : Fragment() {
     private fun showMovies() {
         binding?.RvMovies?.apply {
             val lm = GridLayoutManager(context, 2, GridLayoutManager.VERTICAL, false)
-            moviesAdapter = MoviesAdapter(ArrayList())
+            moviesAdapter = MoviesAdapter()
             layoutManager = lm
             itemAnimator = DefaultItemAnimator()
             adapter = moviesAdapter

@@ -1,7 +1,11 @@
 package com.example.movies.ui.movies
 
 import androidx.lifecycle.*
+import androidx.paging.DataSource
+import androidx.paging.LivePagedListBuilder
+import androidx.paging.PagedList
 import com.example.movies.model.Images
+import com.example.movies.model.Movies
 import com.example.movies.model.responses.ConfigurationResponse
 import com.example.movies.model.responses.MoviesResponse
 import com.example.movies.util.Util
@@ -20,9 +24,6 @@ class MoviesViewModel : ViewModel() {
     val configResponse: LiveData<Resource<ConfigurationResponse>>
         get() = _configResponse
 
-    private val _moviesResponse: MutableLiveData<Resource<MoviesResponse>> = MutableLiveData()
-    val moviesResponse: LiveData<Resource<MoviesResponse>>
-        get() = _moviesResponse
 
     init {
         moviesRepo = MoviesRepository(remoteDataSource.buildApi(MoviesApi::class.java))
@@ -48,9 +49,26 @@ class MoviesViewModel : ViewModel() {
         }
     }
 
-    fun getPopularMovies() {
-        viewModelScope.launch {
-            _moviesResponse.value = moviesRepo.getPopularMovies(1,Util.API_KEY)
+    var postsLiveData  :LiveData<PagedList<Movies>>
+
+    init {
+        val config = PagedList.Config.Builder()
+            .setPageSize(20)
+            .setEnablePlaceholders(false)
+            .build()
+        postsLiveData  = initializedPagedListBuilder(config).build()
+    }
+
+    fun getPosts():LiveData<PagedList<Movies>> = postsLiveData
+
+    private fun initializedPagedListBuilder(config: PagedList.Config):
+            LivePagedListBuilder<Int, Movies> {
+
+        val dataSourceFactory = object : DataSource.Factory<Int, Movies>() {
+            override fun create(): DataSource<Int, Movies> {
+                return MoviesDataSource(moviesRepo,viewModelScope)
+            }
         }
+        return LivePagedListBuilder<Int, Movies>(dataSourceFactory, config)
     }
 }
